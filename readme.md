@@ -2,13 +2,21 @@ weak_classdump
 ==============
 A Cycript script that generates a header file for the class passed to the function.
 
+Most useful when you cannot classdump , when binaries are encrypted etc.
+
 -------------------------------
 Usage examples : 
-	cycript -p SpringBoard weak_classdump.cy ; cycript -p SpringBoard
+
+	root# cycript -p SpringBoard weak_classdump.cy ; cycript -p SpringBoard
+	
 	cy# weak_classdump(SBIcon);
 	"Wrote file to /tmp/SBIcon.h"
+	
 	cy# weak_classdump(UIApplication,"/var/mobile/classdumps/");
 	"Wrote file to /var/mobile/classdumps/UIApplication.h"
+	
+
+
 	
 by Elias Limneos
 ----------------

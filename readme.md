@@ -34,7 +34,7 @@ twitter: @limneos
 
 Issues
 -----------
-It currently doesn't instantiate any objects in runtime (for performance reasons) so no initializers +() are returned
+Thanks to Ryan Petrich, currently no issues. I might just need to optimize the code a bit for speed and readability.
 
 Licence
 -----------

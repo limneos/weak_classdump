@@ -53,8 +53,8 @@
 	NSNumberFormatter* _percentFormatter; 
 	NSTimer* _midnightTimer; 
 	NSDate* _midnightFireDate; 
-	opaquepthreadt=ldarwinpthreadhandlerrecc*[^=^596] _backgroundMIGServerThread; 
-	opaquepthreadt=ldarwinpthreadhandlerrecc*[^=^596] _iconGenerationMIGServerThread; 
+	struct _opaque_pthread_t* _backgroundMIGServerThread; 
+	struct _opaque_pthread_t* _iconGenerationMIGServerThread; 
 	SBAppContextHostManager* _springBoardContextHostManager; 
 	UIWindow* _springBoardContextHostWindow; 
 	NSMutableSet* _displaysRequestingAggressiveJetsamMode; 

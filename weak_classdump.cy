@@ -217,7 +217,7 @@ function weak_classdump(classname,outputdir){
 	_class_copyIvarList = new Functor(dlsym(RTLD_DEFAULT,"class_copyIvarList"),"^^{objc_ivar=}#^I");
 	_class_copyProtocolList=new Functor(dlsym(RTLD_DEFAULT,"class_copyProtocolList"),"^@#^I");
 	_class_conformsToProtocol=new Functor(dlsym(RTLD_DEFAULT,"class_conformsToProtocol"),"B#@");
-	_class_copyMethodList=new Functor(dlsym(RTLD_DEFAULT,"class_copyMethodList"),"^^{objc_method=}#^I");
+	
 	_class_copyPropertyList=new Functor(dlsym(RTLD_DEFAULT,"class_copyPropertyList"),"^^{objc_property=}#^I");
 	_method_getName=new Functor(dlsym(RTLD_DEFAULT,"method_getName"),"*^{objc_method=}");
 	_method_getNumberOfArguments=new Functor(dlsym(RTLD_DEFAULT,"method_getNumberOfArguments"),"I^{objc_method=}");
@@ -228,7 +228,12 @@ function weak_classdump(classname,outputdir){
 	_ivar_getName = new Functor(dlsym(RTLD_DEFAULT,"ivar_getName"),"*^?");
 	_ivar_getTypeEncoding = new Functor(dlsym(RTLD_DEFAULT,"ivar_getTypeEncoding"),"*^{objc_ivar=}");
 	_protocol_getName=new Functor(dlsym(RTLD_DEFAULT,"protocol_getName"),"*@");
-	 
+	
+	// Note: Looking for a way to get class methods with or without instantiating a class object.
+	_class_copyMethodList=new Functor(dlsym(RTLD_DEFAULT,"class_copyMethodList"),"^^{objc_method=}#^I");
+	//_objc_getClassList=new Functor(dlsym(RTLD_DEFAULT,"objc_getClassList"),"i^#i");
+	//_class_createInstance=new Functor(dlsym(RTLD_DEFAULT,"class_createInstance"),"@#L");
+	
 	 
 	protocolsCount=new int;
 	protocolArray=_class_copyProtocolList(classname,protocolsCount);
@@ -324,7 +329,7 @@ function weak_classdump(classname,outputdir){
 		
 	}
 	free(methodList);
-	classString = classString.toString()+"\n@end";
+	classString = classString.toString()+"@end";
  
 	if (typeof(outputdir) == 'undefined'){
 		outputdir = "/tmp";
@@ -335,10 +340,14 @@ function weak_classdump(classname,outputdir){
 		return "Wrote file to "+outputdir.toString()+classname.toString()+".h";
 	}
 	else {
-		return "There were errors writing to "+outputdir.toString()+classname.toString()+".h - Check file path and permissions?";
+		NSSearchPathForDirectoriesInDomains=new Functor(dlsym(RTLD_DEFAULT,"NSSearchPathForDirectoriesInDomains"),"@ccc");
+		writeableDir=NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+		writeableDir=writeableDir[0];
+		return "Failed to write to "+outputdir.toString()+classname.toString()+".h - Check file path and permissions? Suggested writeable directory: "+writeableDir.toString();
 	}
 }
 // Usage example : weak_classdump(SBAwayController);
 // (will write to default path "/tmp/SBAwayController.h"
 // example 2: weak_classdump(UIApplication,"/var/mobile/");
 // will write to "/var/mobile/UIApplication.h"
+

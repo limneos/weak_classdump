@@ -34,7 +34,7 @@ twitter: @limneos
 
 Issues
 -----------
-It currently assumes every variable as (id), since I cannot get types from cycript class.messages approach.
+It currently doesn't instantiate any objects in runtime (for performance reasons) so no initializers +() are returned
 
 Licence
 -----------

@@ -41,7 +41,7 @@ Licence
 
 weak_classdump is open source. Feel free to help improving it if you like.
 
-Licence
+Environment
 -----------
 weak_classdump works under Cycript. Visit cycript.org for more info.
 

@@ -238,9 +238,12 @@ function weak_classdump(classname,outputdir){
 	// Note: Looking for a way to get class methods with or without instantiating a class object.
 	_class_copyMethodList=new Functor(dlsym(RTLD_DEFAULT,"class_copyMethodList"),"^^{objc_method=}#^I");
 	//_objc_getClassList=new Functor(dlsym(RTLD_DEFAULT,"objc_getClassList"),"i^#i");
-	//_class_createInstance=new Functor(dlsym(RTLD_DEFAULT,"class_createInstance"),"@#L");
+	_class_createInstance=new Functor(dlsym(RTLD_DEFAULT,"class_createInstance"),"@#L");
+	_objc_getMetaClass=new Functor(dlsym(RTLD_DEFAULT,"objc_getMetaClass"),"@*");
 	
-	 
+	
+
+	
 	protocolsCount=new int;
 	protocolArray=_class_copyProtocolList(classname,protocolsCount);
 	protocolsString="";
@@ -304,6 +307,39 @@ function weak_classdump(classname,outputdir){
 	 
 	free(propertyList);
 	methodsCount=new int;
+	classMethodsCound=new int;
+	classMethodList=_class_copyMethodList(object_getClass(classname),classMethodsCound);
+	for (i=0; i<*classMethodsCound;i++){
+		method=classMethodList[i];
+		methodName=_method_getName(method);
+		returnType=_method_copyReturnType(method);
+		returnType=[constructTypeAndName([NSString stringWithString:returnType],[NSString stringWithString:""],0) stringByRemovingWhitespace];
+		argNum=_method_getNumberOfArguments(method);
+		methodBrokenDown=[methodName componentsSeparatedByString:@":"];
+		methodString=[NSString stringWithString:""];
+		if ([methodBrokenDown count]>1){
+			for (x=0; x<[methodBrokenDown count]-1; x++){
+				anIndex=x+2;
+				argumentType=_method_copyArgumentType(method,anIndex);
+				if (!argumentType){
+					argumentType="id";
+				}
+				typeName=constructTypeAndName([NSString stringWithString:argumentType],[NSString stringWithString:""],0);
+				typeName=[typeName stringByTrimmingLastCharacter];
+				methodString=methodString.toString()+methodBrokenDown[x].toString()+":("+typeName.toString()+")arg"+(x+1)+" ";
+				
+			}
+			methodString=[methodString stringByTrimmingLastCharacter];
+		}
+		else{
+			methodString=methodName;
+		}
+		
+		classString=classString.toString()+"+("+returnType.toString()+")"+methodString.toString()+";\n";
+		
+	}
+	
+	free(classMethodList);
 	methodList=_class_copyMethodList(classname,methodsCount);
 	for (i=0; i<*methodsCount;i++){
 		method=methodList[i];

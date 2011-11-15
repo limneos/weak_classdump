@@ -2,13 +2,27 @@ weak_classdump
 ==============
 A Cycript script that generates a header file for the class passed to the function.
 
+Most useful when you cannot classdump , when binaries are encrypted etc.
+
 -------------------------------
 Usage examples : 
-	cycript -p SpringBoard weak_classdump.cy ; cycript -p SpringBoard
-	cy# weak_classdump(SBIcon);
-	"Wrote file to /tmp/SBIcon.h"
-	cy# weak_classdump(UIApplication,"/var/mobile/classdumps/");
-	"Wrote file to /var/mobile/classdumps/UIApplication.h"
+
+	root# cycript -p Skype weak_classdump.cy; cycript -p Skype
+	cy# UIApp
+	"<HellcatApplication: 0x1734e0>"
+
+	cy# weak_classdump(HellcatApplication);
+	"Wrote file to /tmp/HellcatApplication.h"
+	
+	cy# UIApp.delegate
+	"<SkypeAppDelegate: 0x194db0>"
+	
+	cy# weak_classdump(SkypeAppDelegate,"/someDirWithWriteAccess/");
+	"Wrote file to /someDirWithWriteAccess/SkypeAppDelegate.h"
+	
+	
+
+
 	
 by Elias Limneos
 ----------------

@@ -1,5 +1,7 @@
 #!/usr/bin/cycript 
 
+
+
 function commonTypes(type){
 	
 	isPointer=NO;
@@ -29,6 +31,8 @@ function commonTypes(type){
 		case "#": type = "Class"; break;
 		case "@": type = "id"; break;
 		case "@?": type = "id"; break;
+		case "Vv": type = "void"; break;
+		case "rv": type = "const void*"; break;
 		default: type = type;
 	
 	}
@@ -36,11 +40,44 @@ function commonTypes(type){
 	return isPointer ? type.toString()+"*" : type.toString();
 
 }
-function constructTypeAndName(aType,IvarName,isIvar){
-	//return aType.toString()+" "+IvarName.toString();
-	NSNotFound=2147483647;
+
+
+
+function structParser(aStruct){
 	
-			
+	hasMoreStructs=0;
+	structString="";
+	someType="";
+		//hasMoreStructs=1;
+		aStruct=[NSString stringWithString:aStruct];
+		aStruct=[aStruct stringByReplacingOccurrencesOfString:@"^{?=" withString:""];
+		aStruct=[aStruct stringByReplacingOccurrencesOfString:@"}" withString:""];
+		
+		for (var f=0; f<[aStruct length]; f++){
+			currentLetter=[aStruct substringWithRange:[f,1]];
+			someType=constructTypeAndName(currentLetter,"",0);
+			someType=[someType stringByRemovingWhitespace];
+			structString=structString.toString()+"\t"+someType.toString()+" value"+(f+1).toString()+";\n";
+		}
+		structName="WCStruct_"+aStruct.toString();
+		if (![structsString containsSubstring:structName]){
+			structString="typedef struct{\n"+structString.toString();
+			structString=structString.toString()+"} "+structName.toString()+";\n\n";
+			structsString=structsString.toString()+structString.toString();
+		}
+		
+		structName=structName.toString()+"*";
+		return structName;
+	
+	return aStruct;
+	
+
+}
+
+function constructTypeAndName(aType,IvarName,isIvar){
+	
+	NSNotFound=2147483647;
+				
 	compareString1=[NSString stringWithString:aType];
 	compareString2=[[[NSString stringWithString:aType] stringByReplacingOccurrencesOfString:"^" withString:""] stringByAppendingString:@"*"];
 	if (![[NSString stringWithString:commonTypes(aType)] isEqual:compareString1] && ![[NSString stringWithString:commonTypes(aType)] isEqual:compareString2]){
@@ -50,9 +87,6 @@ function constructTypeAndName(aType,IvarName,isIvar){
 
 	charSet=[NSCharacterSet characterSetWithCharactersInString:"@^\"{}="];
 	structCharSet=[NSCharacterSet characterSetWithCharactersInString:"?:{}="];
-	
-	
-
 	
 	if ([aType rangeOfString:"]"].location!=NSNotFound && [aType rangeOfString:"^{"].location==NSNotFound){
 		
@@ -92,13 +126,27 @@ function constructTypeAndName(aType,IvarName,isIvar){
 	}
 	
 	if ([aType rangeOfString:"{"].length>0){
-		returnValue="struct ";
+			returnValue="struct ";
 		range=[aType rangeOfString:@"="];
-		if ([aType containsSubstring:@"{?={"]){
-			return @"Unknown_struct "+IvarName.toString();
+		if ([aType containsSubstring:@"^{?="]){
+			return structParser(aType).toString()+" "+IvarName.toString();
 		}
 		aType=[aType stringByReplacingCharactersInRange:[range.location,aType.length-range.location] withString:"" ];
 		returnValue=returnValue.toString()+[aType stringByRemovingCharactersFromSet:structCharSet].toString();
+		if ([returnValue containsSubstring:@"GSEvent"] || [returnValue containsSubstring:@"CTCall"]){
+			returnValue=[returnValue stringByReplacingOccurrencesOfString:"__" withString:""];
+			returnValue=[returnValue stringByReplacingOccurrencesOfString:"struct " withString:""];
+			returnValue=[returnValue stringByReplacingOccurrencesOfString:"^" withString:""];
+			returnValue=[returnValue stringByAppendingString:"Ref"];
+			
+		}
+		if ([returnValue containsSubstring:@"NSZone"]){
+			returnValue="NSZone*";
+		}
+				
+		if ([returnValue containsSubstring:@"CGPoint"] || [returnValue containsSubstring:@"CGRect"]  || [returnValue containsSubstring:@"CGSize"] ){
+			returnValue=[returnValue stringByReplacingOccurrencesOfString:@"struct " withString:@""];
+		}
 		return commonTypes(returnValue).toString()+" "+IvarName.toString();
 	}
 	
@@ -131,9 +179,6 @@ function constructTypeAndName(aType,IvarName,isIvar){
 		return "unsigned int "+IvarName.toString()+":"+string.toString();
 	}
 	
-	
-	//aType=commonTypes(aType);
-	
 	return aType.toString() + " " + IvarName.toString();
  
 }
@@ -164,7 +209,6 @@ function propertyLineGenerator(attributes,name){
 		type=[type stringByReplacingCharactersInRange:[0,1] withString:""];
 		type=constructTypeAndName(type,"",0);
 		type=[type stringByRemovingWhitespace];
-		//return type.toString()+"\n";
 		attrArr=[NSMutableArray arrayWithArray:attrArr];
 		[attrArr removeObjectAtIndex:0];
 		
@@ -173,23 +217,25 @@ function propertyLineGenerator(attributes,name){
 		newPropsArray=[NSMutableArray array];
 		synthesize=[NSString stringWithString:""];
 		for each (attr in attrArr){
+		
 			vToClear=nil;		
+			
 			if ([attr rangeOfString:@"V_"].location==0){
 				vToClear=attr;
-				attr=[attr stringByReplacingCharactersInRange:[0,1] withString:""];
-				synthesize="\t//@synthesize "+attr.toString()+"=_"+attr.toString()+" - In the implementation block";
+				attr=[attr stringByReplacingCharactersInRange:[0,2] withString:""];
+				synthesize="\t\t\t\t//@synthesize "+attr.toString()+"=_"+attr.toString()+" - In the implementation block";
 			}
-			if ([attr length]==1){
-				
-				[newPropsArray addObject:propertyTranslator(attr)];
-				
 			
+			if ([attr length]==1){
+				[newPropsArray addObject:propertyTranslator(attr)];
 			}
+			
 			if ([attr rangeOfString:@"G"].location==0){
 				attr=[attr stringByReplacingCharactersInRange:[0,1] withString:""];
 				attr="getter="+attr.toString();
 				[newPropsArray addObject:attr];
 			}
+			
 			if ([attr rangeOfString:@"S"].location==0){
 				attr=[attr stringByReplacingCharactersInRange:[0,1] withString:""];
 				attr="setter="+attr.toString();
@@ -197,6 +243,7 @@ function propertyLineGenerator(attributes,name){
 			}
 			
 		}
+		
 		if ([newPropsArray containsObject:@"nonatomic"] && ![newPropsArray containsObject:@"assign"] && ![newPropsArray containsObject:@"readonly"] && ![newPropsArray containsObject:@"copy"] && ![newPropsArray containsObject:@"retain"]){
 			[newPropsArray addObject:@"assign"];
 		}
@@ -211,136 +258,8 @@ function propertyLineGenerator(attributes,name){
 
 }
 
-function weak_classdump(classname,outputdir){
-	if (!classname){
-		return "Cannot find class";
-	}
-	version = [NSProcessInfo processInfo ].operatingSystemVersionString;
-	loc=[NSLocale localeWithLocaleIdentifier: "en-us"];
-	date=[NSDate.date descriptionWithLocale: loc];
-	classString = "/*\n * This header is generated by weak_classdump 0.0.1\n * on "+date.toString()+"\n * Operating System: "+version.toString()+"\n * weak_classdump is Freeware by Elias Limneos.\n *\n */\n\n";
-	
-	_class_copyIvarList = new Functor(dlsym(RTLD_DEFAULT,"class_copyIvarList"),"^^{objc_ivar=}#^I");
-	_class_copyProtocolList=new Functor(dlsym(RTLD_DEFAULT,"class_copyProtocolList"),"^@#^I");
-	_class_conformsToProtocol=new Functor(dlsym(RTLD_DEFAULT,"class_conformsToProtocol"),"B#@");
-	
-	_class_copyPropertyList=new Functor(dlsym(RTLD_DEFAULT,"class_copyPropertyList"),"^^{objc_property=}#^I");
-	_method_getName=new Functor(dlsym(RTLD_DEFAULT,"method_getName"),"*^{objc_method=}");
-	_method_getNumberOfArguments=new Functor(dlsym(RTLD_DEFAULT,"method_getNumberOfArguments"),"I^{objc_method=}");
-	_method_copyReturnType=new Functor(dlsym(RTLD_DEFAULT,"method_copyReturnType"),"*^{objc_method=}");
-	_method_copyArgumentType=new Functor(dlsym(RTLD_DEFAULT,"method_copyArgumentType"),"*^{objc_method=}I");
-	_property_getAttributes=new Functor(dlsym(RTLD_DEFAULT,"property_getAttributes"),"*^{objc_property=}");  
-	_property_getName=new Functor(dlsym(RTLD_DEFAULT,"property_getName"),"*^{objc_property=}"); 
-	_ivar_getName = new Functor(dlsym(RTLD_DEFAULT,"ivar_getName"),"*^?");
-	_ivar_getTypeEncoding = new Functor(dlsym(RTLD_DEFAULT,"ivar_getTypeEncoding"),"*^{objc_ivar=}");
-	_protocol_getName=new Functor(dlsym(RTLD_DEFAULT,"protocol_getName"),"*@");
-	
-	// Note: Looking for a way to get class methods with or without instantiating a class object.
-	_class_copyMethodList=new Functor(dlsym(RTLD_DEFAULT,"class_copyMethodList"),"^^{objc_method=}#^I");
-	//_objc_getClassList=new Functor(dlsym(RTLD_DEFAULT,"objc_getClassList"),"i^#i");
-	_class_createInstance=new Functor(dlsym(RTLD_DEFAULT,"class_createInstance"),"@#L");
-	_objc_getMetaClass=new Functor(dlsym(RTLD_DEFAULT,"objc_getMetaClass"),"@*");
-	
-	
-
-	
-	protocolsCount=new int;
-	protocolArray=_class_copyProtocolList(classname,protocolsCount);
-	protocolsString="";
-	for (i=0; i<*protocolsCount; i++){
-		if (_class_conformsToProtocol(classname,protocolArray[i])){
-			protocolsString=protocolsString.toString()+" <"+_protocol_getName(protocolArray[i]).toString()+">";
-		}
-	}
-	
-	superclass=classname.superclass;
-	
-	if (superclass!=nil && superclass!="nil"){
-		classString = classString.toString()+[NSString stringWithString:@"@interface "+classname.toString()+" : "+superclass.toString()].toString() + protocolsString.toString();
-	}
-	else{
-		classString = classString.toString()+[NSString stringWithString:@"@interface "+classname.toString()].toString() + protocolsString.toString();
-	}
-  
-	classIvarCount=new int;
-	superclassIvarCount=new int;
-	list=_class_copyIvarList(classname,classIvarCount);
-	superlist=_class_copyIvarList(superclass,superclassIvarCount);
-	
-	superClassIvars=[NSMutableArray array];
-	
-	classString = classString.toString()+" {";  
-	
-	for (i=0; i<*superclassIvarCount;i++){
-		if (_ivar_getName(superlist[i])){
-			[superClassIvars addObject:_ivar_getName(superlist[i])];
-		}
-	
-	}
-	free(superlist);
-	for (i=0; i<*classIvarCount;i++){
-		classIvar=_ivar_getName(list[i]);
-		appendString="";
-		if (classIvar && ![superClassIvars containsObject:classIvar]){
-			ivarType=ivar_getTypeEncoding(list[i]).toString();
-			ivar=constructTypeAndName([NSString stringWithString:ivarType],[NSString stringWithString:_ivar_getName(list[i])],1);
-			classString=classString.toString()+"\n\t"+ivar.toString()+"; "; 
-		}
-	
-	}
-	
-	free(list);
-	
-	classString = classString.toString()+"\n}\n";     
-	
- 
-
-	propertiesCount=new int;
-	propertyList=_class_copyPropertyList(classname,propertiesCount);
-	for (i=0; i<*propertiesCount; i++){
-		
-		propname=_property_getName(propertyList[i]);
-		attrs=_property_getAttributes(propertyList[i]);
-		
-		classString=classString.toString()+propertyLineGenerator(attrs,propname).toString();
-	}
-	 
-	free(propertyList);
-	methodsCount=new int;
-	classMethodsCound=new int;
-	classMethodList=_class_copyMethodList(object_getClass(classname),classMethodsCound);
-	for (i=0; i<*classMethodsCound;i++){
-		method=classMethodList[i];
-		methodName=_method_getName(method);
-		returnType=_method_copyReturnType(method);
-		returnType=[constructTypeAndName([NSString stringWithString:returnType],[NSString stringWithString:""],0) stringByRemovingWhitespace];
-		argNum=_method_getNumberOfArguments(method);
-		methodBrokenDown=[methodName componentsSeparatedByString:@":"];
-		methodString=[NSString stringWithString:""];
-		if ([methodBrokenDown count]>1){
-			for (x=0; x<[methodBrokenDown count]-1; x++){
-				anIndex=x+2;
-				argumentType=_method_copyArgumentType(method,anIndex);
-				if (!argumentType){
-					argumentType="id";
-				}
-				typeName=constructTypeAndName([NSString stringWithString:argumentType],[NSString stringWithString:""],0);
-				typeName=[typeName stringByTrimmingLastCharacter];
-				methodString=methodString.toString()+methodBrokenDown[x].toString()+":("+typeName.toString()+")arg"+(x+1)+" ";
-				
-			}
-			methodString=[methodString stringByTrimmingLastCharacter];
-		}
-		else{
-			methodString=methodName;
-		}
-		
-		classString=classString.toString()+"+("+returnType.toString()+")"+methodString.toString()+";\n";
-		
-	}
-	
-	free(classMethodList);
-	methodList=_class_copyMethodList(classname,methodsCount);
+function methodLinesGenerator(methodList,methodsCount,isClassMethod){
+	methodLines="";
 	for (i=0; i<*methodsCount;i++){
 		method=methodList[i];
 		methodName=_method_getName(method);
@@ -358,6 +277,7 @@ function weak_classdump(classname,outputdir){
 				}
 				typeName=constructTypeAndName([NSString stringWithString:argumentType],[NSString stringWithString:""],0);
 				typeName=[typeName stringByTrimmingLastCharacter];
+				
 				methodString=methodString.toString()+methodBrokenDown[x].toString()+":("+typeName.toString()+")arg"+(x+1)+" ";
 				
 			}
@@ -366,26 +286,155 @@ function weak_classdump(classname,outputdir){
 		else{
 			methodString=methodName;
 		}
-		
-		classString=classString.toString()+"-("+returnType.toString()+")"+methodString.toString()+";\n";
+
+		symbol=isClassMethod ? "+" : "-"; symbol=[NSString stringWithString:symbol];
+		newMethod=symbol.toString()+"("+returnType.toString()+")"+methodString.toString()+";\n";
+		cappedMethod=[methodName capitalizedString];
+		setterMethod="set"+cappedMethod.toString();
+		if (![methodsArray containsObject:newMethod] && ![propertiesString containsSubstring:methodName] && ![methodsString containsSubstring:setterMethod]){
+			[methodsArray addObject:newMethod];
+			methodLines=methodLines.toString()+newMethod.toString();
+		}
 		
 	}
+	return methodLines;
+
+}
+
+function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
+	if (!classname){
+		return "Cannot find class";
+	}
+	
+	if (typeof(alsoDumpSuperclasses) == 'undefined' || !alsoDumpSuperclasses){
+		alsoDumpSuperclasses=0;
+	}
+	
+	structsString="";
+	interfaceString="";
+	version = [NSProcessInfo processInfo ].operatingSystemVersionString;
+	loc=[NSLocale localeWithLocaleIdentifier: "en-us"];
+	date=[NSDate.date descriptionWithLocale: loc];
+	classString = "/*\n * This header is generated by weak_classdump 0.0.1\n * on "+date.toString()+"\n * Operating System: "+version.toString()+"\n * weak_classdump is Freeware by Elias Limneos.\n *\n */\n\n";
+	
+	_class_copyIvarList = new Functor(dlsym(RTLD_DEFAULT,"class_copyIvarList"),"^^{objc_ivar=}#^I");
+	_class_copyProtocolList=new Functor(dlsym(RTLD_DEFAULT,"class_copyProtocolList"),"^@#^I");
+	_class_conformsToProtocol=new Functor(dlsym(RTLD_DEFAULT,"class_conformsToProtocol"),"B#@");
+	_class_copyMethodList=new Functor(dlsym(RTLD_DEFAULT,"class_copyMethodList"),"^^{objc_method=}#^I");
+	_class_copyPropertyList=new Functor(dlsym(RTLD_DEFAULT,"class_copyPropertyList"),"^^{objc_property=}#^I");
+	_method_getName=new Functor(dlsym(RTLD_DEFAULT,"method_getName"),"*^{objc_method=}");
+	_method_getNumberOfArguments=new Functor(dlsym(RTLD_DEFAULT,"method_getNumberOfArguments"),"I^{objc_method=}");
+	_method_copyReturnType=new Functor(dlsym(RTLD_DEFAULT,"method_copyReturnType"),"*^{objc_method=}");
+	_method_copyArgumentType=new Functor(dlsym(RTLD_DEFAULT,"method_copyArgumentType"),"*^{objc_method=}I");
+	_property_getAttributes=new Functor(dlsym(RTLD_DEFAULT,"property_getAttributes"),"*^{objc_property=}");  
+	_property_getName=new Functor(dlsym(RTLD_DEFAULT,"property_getName"),"*^{objc_property=}"); 
+	_ivar_getName = new Functor(dlsym(RTLD_DEFAULT,"ivar_getName"),"*^?");
+	_ivar_getTypeEncoding = new Functor(dlsym(RTLD_DEFAULT,"ivar_getTypeEncoding"),"*^{objc_ivar=}");
+	_protocol_getName=new Functor(dlsym(RTLD_DEFAULT,"protocol_getName"),"*@");
+	_objc_getClassList=new Functor(dlsym(RTLD_DEFAULT,"objc_getClassList"),"i^#");
+	 methodsArray=[NSMutableArray array];
+	propertiesString=@"";
+	methodsString=@"";
+	ivarsString=@"";
+	classMethodsString=@"";
+
+	startingClassname=classname;
+	superclass=classname.superclass;
+	
+	protocolsCount=new int;
+	protocolArray=_class_copyProtocolList(classname,protocolsCount);
+	protocolsString="";
+	for (i=0; i<*protocolsCount; i++){
+		if (_class_conformsToProtocol(classname,protocolArray[i])){
+			protocolsString=protocolsString.toString()+" <"+_protocol_getName(protocolArray[i]).toString()+">";
+		}
+	}
+	
+	if (classname.superclass!=nil && classname.superclass!="nil"){
+		interfaceString = [NSString stringWithString:@"@interface "+classname.toString()+" : "+classname.superclass.toString()].toString() + protocolsString.toString();
+	}
+	else{
+		interfaceString = [NSString stringWithString:@"@interface "+classname.toString()].toString() + protocolsString.toString();
+	}
+	
+	
+	while (classname!=NSObject && (classname.superclass!="nil" && classname.superclass!=NSObject) ) {
+	
+	// Get Ivars
+	classIvarCount=new int;
+	superclassIvarCount=new int;
+	list=_class_copyIvarList(classname,classIvarCount);
+	superlist=_class_copyIvarList(superclass,superclassIvarCount);
+	superClassIvars=[NSMutableArray array];
+	for (i=0; i<*superclassIvarCount;i++){
+		if (_ivar_getName(superlist[i])){
+			[superClassIvars addObject:_ivar_getName(superlist[i])];
+		}
+	
+	}
+	free(superlist);
+	for (i=0; i<*classIvarCount;i++){
+		classIvar=_ivar_getName(list[i]);
+		appendString="";
+		if (classIvar && ![superClassIvars containsObject:classIvar]){
+			ivarType=ivar_getTypeEncoding(list[i]).toString();
+			ivar=constructTypeAndName([NSString stringWithString:ivarType],[NSString stringWithString:_ivar_getName(list[i])],1);
+			newString="\n\t"+ivar.toString()+"; "; 
+			if (![ivarsString containsSubstring:newString]){
+				ivarsString=ivarsString.toString()+newString.toString();
+			}
+		}
+	
+	}
+	free(list);
+	
+	// Get Properties
+	propertiesCount=new int;
+	propertyList=_class_copyPropertyList(classname,propertiesCount);
+	for (i=0; i<*propertiesCount; i++){
+		
+		propname=_property_getName(propertyList[i]);
+		attrs=_property_getAttributes(propertyList[i]);
+		newString=propertyLineGenerator(attrs,propname).toString();
+		if (![propertiesString containsSubstring:newString]){
+			propertiesString=propertiesString.toString()+newString.toString();
+		}
+	}
+	free(propertyList);
+	
+	// Get Methods
+	methodsCount=new int;
+	classMethodsCount=new int;
+	classMethodList=_class_copyMethodList(object_getClass(classname),classMethodsCount);
+	methodList=_class_copyMethodList(classname,methodsCount);
+	classMethodsString=classMethodsString.toString()+methodLinesGenerator(classMethodList,classMethodsCount,1).toString();
+	methodsString=methodsString.toString()+methodLinesGenerator(methodList,methodsCount,0).toString();
 	free(methodList);
+	free(classMethodList);
+	if (!alsoDumpSuperclasses)
+		break;
+	classname=classname.superclass ? classname.superclass : NSObject;
+	
+	}
+	
+	classString= classString.toString()+structsString.toString()+interfaceString.toString();
+	classString = classString.toString()+" {"+ivarsString.toString()+"\n}\n"+propertiesString.toString()+classMethodsString.toString()+methodsString.toString();  
 	classString = classString.toString()+"@end";
- 
+		
+	
 	if (typeof(outputdir) == 'undefined'){
 		outputdir = "/tmp";
 	}
 	outputdir=outputdir.toString()+"/";
 	classString = [NSString stringWithString:classString ]; 
-	if ([classString writeToFile:outputdir.toString()+classname.toString()+".h" atomically:YES]){
-		return "Wrote file to "+outputdir.toString()+classname.toString()+".h";
+	if ([classString writeToFile:outputdir.toString()+startingClassname.toString()+".h" atomically:YES]){
+		return "Wrote file to "+outputdir.toString()+startingClassname.toString()+".h";
 	}
 	else {
 		NSSearchPathForDirectoriesInDomains=new Functor(dlsym(RTLD_DEFAULT,"NSSearchPathForDirectoriesInDomains"),"@ccc");
 		writeableDir=NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 		writeableDir=writeableDir[0];
-		return "Failed to write to "+outputdir.toString()+classname.toString()+".h - Check file path and permissions? Suggested writeable directory: "+writeableDir.toString();
+		return "Failed to write to "+outputdir.toString()+startingClassname.toString()+".h - Check file path and permissions? Suggested writeable directory: "+writeableDir.toString();
 	}
 }
 // Usage example : weak_classdump(SBAwayController);

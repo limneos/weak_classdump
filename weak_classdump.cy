@@ -8,7 +8,7 @@ function commonTypes(type){
 	if ([type containsSubstring:@"^"]){
 		isPointer=YES;
 		type=[type stringByReplacingOccurrencesOfString:@"^" withString:""];
-	}
+	} 
 	
 	switch (type.toString()){
 	

@@ -178,6 +178,11 @@ function constructTypeAndName(aType,IvarName,isIvar){
 		}
 		
 		strippedString=[aType stringByRemovingCharactersFromSet:charSet];
+		NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
+	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
+
+		NSLog(@"strippedString class : %@",[strippedString class]);
+		//return [strippedString stringByAppendingString:@"*"].toString()+" "+IvarName.toString();
 		return strippedString.toString()+ "* "+IvarName.toString();
 		
 	}	
@@ -492,9 +497,11 @@ function weak_classdump_bundle(bundle, outputdir) {
 				for (i = 0; i < [this length]; i++) { 
 					character = [this characterAtIndex:i]; 
 					if ([someSet characterIsMember:character]){
-						if (i<[this length]+1){
-							aString=[aString stringByReplacingCharactersInRange:[i,i+1] withString:@""];
-						}
+						
+						characters=[NSMutableArray array];
+						[characters addObject:character];
+						aString=[aString stringByReplacingOccurrencesOfString:[NSString stringWithCharacters:characters length:1] withString:@""];
+						
 					}
 				}
 			
@@ -519,3 +526,4 @@ function weak_classdump_bundle(bundle, outputdir) {
 	}
 	
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";
+

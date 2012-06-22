@@ -517,7 +517,6 @@ function weak_classdump_bundle(bundle, outputdir) {
 				noEmptyStrings = [NSPredicate predicateWithFormat:@"SELF != ''"];    
 				parts = [self componentsSeparatedByCharactersInSet:whitespaces];    
 				filteredArray = [parts filteredArrayUsingPredicate:noEmptyStrings];    
-				welcomeText=welcomeText.toString()+"";
 				return [filteredArray componentsJoinedByString:@" "];
 				
 		}

@@ -442,3 +442,14 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 // example 2: weak_classdump(UIApplication,"/var/mobile/");
 // will write to "/var/mobile/UIApplication.h"
 
+function weak_classdump_bundle(bundle, outputdir) {
+	var permittedNames = [ObjectiveC.classes allKeys].filter(function(name) { return [[NSBundle bundleForClass:objc_getClass(name)] isEqual:bundle] });
+	var results = [];
+	for (var i = 0; i < permittedNames.length; i++) {
+		try {
+			results.push(weak_classdump(objc_getClass(permittedNames[i]), false, outputdir));
+		} catch (e) {
+		}
+	}
+	return results.join("\n");
+}

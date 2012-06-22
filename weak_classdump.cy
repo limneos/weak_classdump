@@ -178,11 +178,6 @@ function constructTypeAndName(aType,IvarName,isIvar){
 		}
 		
 		strippedString=[aType stringByRemovingCharactersFromSet:charSet];
-		NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
-	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
-
-		NSLog(@"strippedString class : %@",[strippedString class]);
-		//return [strippedString stringByAppendingString:@"*"].toString()+" "+IvarName.toString();
 		return strippedString.toString()+ "* "+IvarName.toString();
 		
 	}	

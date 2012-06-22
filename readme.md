@@ -8,7 +8,7 @@ Most useful when you cannot classdump , when binaries are encrypted etc.
 Usage examples : 
 
 	root# cycript -p Skype weak_classdump.cy; cycript -p Skype
-         'Added weak_classdump to "Skype" (1685)'
+	'Added weak_classdump to "Skype" (1685)'
 
 	cy# UIApp
 	"<HellcatApplication: 0x1734e0>"
@@ -22,11 +22,11 @@ Usage examples :
 	cy# weak_classdump(SkypeAppDelegate,"/someDirWithWriteAccess/");
 	"Wrote file to /someDirWithWriteAccess/SkypeAppDelegate.h"
           
-          root# cycript -p iapd weak_classdump.cy; cycript -p iapd
-          'Added weak_classdump to "iapd" (1127)'
-
-          cy# weak_classdump(IAPPortManager)
-          "Wrote file to /tmp/IAPPortManager.h"
+	root# cycript -p iapd weak_classdump.cy; cycript -p iapd
+	'Added weak_classdump to "iapd" (1127)'
+	
+	cy# weak_classdump(IAPPortManager)
+	"Wrote file to /tmp/IAPPortManager.h"
 
 
 by Elias Limneos

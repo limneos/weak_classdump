@@ -425,7 +425,21 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 	if (typeof(outputdir) == 'undefined'){
 		outputdir = "/tmp";
 	}
+	
+	if (typeof(alsoDumpSuperclasses) == 'string'){
+		outputdir=alsoDumpSuperclasses;
+	}
+	
+	isDir= new boolean;
+	dirExists=[[NSFileManager defaultManager ] fileExistsAtPath:outputdir isDirectory: isDir] ;
+	if (!dirExists || !isDir){
+		createDirSucceeded = [[NSFileManager defaultManager ] createDirectoryAtPath:outputdir attributes: nil];
+	}
+	
 	outputdir=outputdir.toString()+"/";
+	
+	
+	
 	classString = [NSString stringWithString:classString ]; 
 	if ([classString writeToFile:outputdir.toString()+startingClassname.toString()+".h" atomically:YES]){
 		return "Wrote file to "+outputdir.toString()+startingClassname.toString()+".h";

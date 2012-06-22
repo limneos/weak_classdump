@@ -77,9 +77,12 @@ function structParser(aStruct){
 function constructTypeAndName(aType,IvarName,isIvar){
 	
 	NSNotFound=2147483647;
-				
+	
+
+	
 	compareString1=[NSString stringWithString:aType];
 	compareString2=[[[NSString stringWithString:aType] stringByReplacingOccurrencesOfString:"^" withString:""] stringByAppendingString:@"*"];
+	
 	if (![[NSString stringWithString:commonTypes(aType)] isEqual:compareString1] && ![[NSString stringWithString:commonTypes(aType)] isEqual:compareString2]){
 		
 		return commonTypes(aType).toString()+" "+IvarName.toString();
@@ -89,6 +92,9 @@ function constructTypeAndName(aType,IvarName,isIvar){
 	structCharSet=[NSCharacterSet characterSetWithCharactersInString:"?:{}="];
 	
 	if ([aType rangeOfString:"]"].location!=NSNotFound && [aType rangeOfString:"^{"].location==NSNotFound){
+		
+		
+
 		
 		aType=[aType stringByRemovingCharactersFromSet: [NSCharacterSet punctuationCharacterSet ]];
 		arrayCount=[[aType copy] stringByRemovingCharactersFromSet: [NSCharacterSet letterCharacterSet ]];
@@ -137,7 +143,7 @@ function constructTypeAndName(aType,IvarName,isIvar){
 			returnValue=[returnValue stringByReplacingOccurrencesOfString:"__" withString:""];
 			returnValue=[returnValue stringByReplacingOccurrencesOfString:"struct " withString:""];
 			returnValue=[returnValue stringByReplacingOccurrencesOfString:"^" withString:""];
-			returnValue=[returnValue stringByAppendingString:"Ref"];
+			returnValue=[returnValue stringByAppendingString:@"Ref"];
 			
 		}
 		if ([returnValue containsSubstring:@"NSZone"]){
@@ -171,7 +177,14 @@ function constructTypeAndName(aType,IvarName,isIvar){
 			return [aType stringByRemovingCharactersFromSet:charSet].toString()+" "+IvarName.toString();
 		}
 		
-		return [[aType stringByRemovingCharactersFromSet:charSet] stringByAppendingString:@"*"].toString()+" "+IvarName.toString();
+		strippedString=[aType stringByRemovingCharactersFromSet:charSet];
+		NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
+	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
+
+		NSLog(@"strippedString class : %@",[strippedString class]);
+		//return [strippedString stringByAppendingString:@"*"].toString()+" "+IvarName.toString();
+		return strippedString.toString()+ "* "+IvarName.toString();
+		
 	}	
 	
 	if ([aType rangeOfString:@"b"].length>0 && [aType rangeOfString:":{"].length<1){
@@ -302,6 +315,8 @@ function methodLinesGenerator(methodList,methodsCount,isClassMethod){
 }
 
 function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
+
+	
 	if (!classname){
 		return "Cannot find class";
 	}
@@ -309,6 +324,8 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 	if (typeof(alsoDumpSuperclasses) == 'undefined' || !alsoDumpSuperclasses){
 		alsoDumpSuperclasses=0;
 	}
+	
+	
 	
 	structsString="";
 	interfaceString="";
@@ -467,3 +484,44 @@ function weak_classdump_bundle(bundle, outputdir) {
 	}
 	return results.join("\n");
 }
+
+	
+	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingCharactersFromSet:)] ){
+			
+			@implementation NSString (weakclassdump_compatibility)
+	
+			-(id)stringByRemovingCharactersFromSet:(id)someSet{
+		
+				aString=[NSString stringWithString:this];
+
+				for (i = 0; i < [this length]; i++) { 
+					character = [this characterAtIndex:i]; 
+					if ([someSet characterIsMember:character]){
+						if (i<[this length]+1){
+							aString=[aString stringByReplacingCharactersInRange:[i,i+1] withString:@""];
+						}
+					}
+				}
+			
+				return aString;
+			}
+			@end
+
+	}
+	
+	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingWhitespace)] ){
+	
+		@implementation NSString (weakclassdump_compatibility)
+		-(id)stringByRemovingWhitespace{
+				whitespaces = [NSCharacterSet whitespaceCharacterSet];    
+				noEmptyStrings = [NSPredicate predicateWithFormat:@"SELF != ''"];    
+				parts = [self componentsSeparatedByCharactersInSet:whitespaces];    
+				filteredArray = [parts filteredArrayUsingPredicate:noEmptyStrings];    
+				welcomeText=welcomeText.toString()+"";
+				return [filteredArray componentsJoinedByString:@" "];
+				
+		}
+		@end
+	}
+	
+"Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";

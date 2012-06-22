@@ -34,7 +34,7 @@ Thanks to Ryan Petrich , you can now use weak_classdump_bundle to dump all heade
 	root# cycript -p MobilePhone weak_classdump.cy; cycript -p MobilePhone
 	'Added weak_classdump to "MobilePhone" (385)'
 	
-	#cy weak_classdump_bundle([NSBundle mainBundle,"/tmp/MobilePhone")
+	#cy weak_classdump_bundle([NSBundle mainBundle],"/tmp/MobilePhone")
 	
 
 by Elias Limneos

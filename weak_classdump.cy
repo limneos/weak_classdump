@@ -484,63 +484,56 @@ function weak_classdump_bundle(bundle, outputdir) {
 }
 
 	
-	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingCharactersFromSet:)] ){
-			
-			
-			
-			
-			@implementation NSString (weakclassdump_compatibility)
-			- (void)removeCharactersInSet:(id)set{
-				
-		    length = [this length];
-			matchRange = [this rangeOfCharacterFromSet:set options:2 range:[0, length]];
-			while(matchRange.length > 0){
-				replaceRange = matchRange;
-				searchRange=[0,0];
-				searchRange.location = replaceRange.location + replaceRange.length;
-				searchRange.length = length - searchRange.location;
-				for(;;){
-					matchRange = [this rangeOfCharacterFromSet:set options:2 range:searchRange];
-					if((matchRange.length == 0) || (matchRange.location != searchRange.location))
-						break;
-					replaceRange.length += matchRange.length;
-					searchRange.length -= matchRange.length;
-					searchRange.location += matchRange.length;
-				}
-				[this deleteCharactersInRange:replaceRange];
-				matchRange.location -= replaceRange.length;
-				length -= replaceRange.length;
-				}
-			}
-			
+if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingCharactersFromSet:)] ){
 
-			- (id)stringByRemovingCharactersFromSet:(id)set{
-				
-				if([this rangeOfCharacterFromSet:set options:2].length == 0)
-					return this;
-				temp = [[this mutableCopyWithZone:[this zone]] autorelease];
-				[temp removeCharactersInSet:set];
-				temp=[temp stringByReplacingOccurrencesOfString: @"\"" withString: @""];
-				return temp;
+	@implementation NSString (weakclassdump_compatibility)
+	- (void)removeCharactersInSet:(id)set{
+	    	length = [this length];
+		matchRange = [this rangeOfCharacterFromSet:set options:2 range:[0, length]];
+		while(matchRange.length > 0){
+			replaceRange = matchRange;
+			searchRange=[0,0];
+			searchRange.location = replaceRange.location + replaceRange.length;
+			searchRange.length = length - searchRange.location;
+			for(;;){
+				matchRange = [this rangeOfCharacterFromSet:set options:2 range:searchRange];
+				if((matchRange.length == 0) || (matchRange.location != searchRange.location))
+					break;
+				replaceRange.length += matchRange.length;
+				searchRange.length -= matchRange.length;
+				searchRange.location += matchRange.length;
 			}
-			
-			@end
-
-	}
-	
-	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingWhitespace)] ){
-	
-		@implementation NSString (weakclassdump_compatibility)
-		-(id)stringByRemovingWhitespace{
-			 return [this stringByRemovingCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]];
+			[this deleteCharactersInRange:replaceRange];
+			matchRange.location -= replaceRange.length;
+			length -= replaceRange.length;
 		}
-		@end
 	}
-	
-	NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
-	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
- 
+			
+	- (id)stringByRemovingCharactersFromSet:(id)set{
 
+		if([this rangeOfCharacterFromSet:set options:2].length == 0)
+			return this;
+		temp = [[this mutableCopyWithZone:[this zone]] autorelease];
+		[temp removeCharactersInSet:set];
+		temp=[temp stringByReplacingOccurrencesOfString: @"\"" withString: @""];
+		return temp;
+	}
+			
+	@end
+
+}
 	
+if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingWhitespace)] ){
+	
+	@implementation NSString (weakclassdump_compatibility)
+	-(id)stringByRemovingWhitespace{
+		 return [this stringByRemovingCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]];
+	}
+	@end
+}
+	
+NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
+NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
+ 
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";
 

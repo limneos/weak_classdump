@@ -178,11 +178,6 @@ function constructTypeAndName(aType,IvarName,isIvar){
 		}
 		
 		strippedString=[aType stringByRemovingCharactersFromSet:charSet];
-		NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
-	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
-
-		NSLog(@"strippedString class : %@",[strippedString class]);
-		//return [strippedString stringByAppendingString:@"*"].toString()+" "+IvarName.toString();
 		return strippedString.toString()+ "* "+IvarName.toString();
 		
 	}	
@@ -316,7 +311,7 @@ function methodLinesGenerator(methodList,methodsCount,isClassMethod){
 
 function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 
-	
+	NSLog(@"weak_classdump: Dumping class %@",classname);
 	if (!classname){
 		return "Cannot find class";
 	}
@@ -524,6 +519,11 @@ function weak_classdump_bundle(bundle, outputdir) {
 		}
 		@end
 	}
+	
+	NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
+	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
+ 
+
 	
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";
 

@@ -356,10 +356,18 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 	protocolsCount=new int;
 	protocolArray=_class_copyProtocolList(classname,protocolsCount);
 	protocolsString="";
-	for (i=0; i<*protocolsCount; i++){
-		if (_class_conformsToProtocol(classname,protocolArray[i])){
-			protocolsString=protocolsString.toString()+" <"+_protocol_getName(protocolArray[i]).toString()+">";
+	if (*protocolsCount>0){
+		protocolsString=@" <".toString();
+		for (i=0; i<*protocolsCount; i++){
+			if (_class_conformsToProtocol(classname,protocolArray[i])){
+				comma=@"".toString();
+				if (i<*protocolsCount-1){
+					comma=@", ".toString();
+				}
+				protocolsString=protocolsString.toString()+_protocol_getName(protocolArray[i]).toString()+comma;
+			}
 		}
+		protocolsString=protocolsString+@">".toString();
 	}
 	
 	if (classname.superclass!=nil && classname.superclass!="nil"){
@@ -484,56 +492,63 @@ function weak_classdump_bundle(bundle, outputdir) {
 }
 
 	
-if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingCharactersFromSet:)] ){
-
-	@implementation NSString (weakclassdump_compatibility)
-	- (void)removeCharactersInSet:(id)set{
-	    	length = [this length];
-		matchRange = [this rangeOfCharacterFromSet:set options:2 range:[0, length]];
-		while(matchRange.length > 0){
-			replaceRange = matchRange;
-			searchRange=[0,0];
-			searchRange.location = replaceRange.location + replaceRange.length;
-			searchRange.length = length - searchRange.location;
-			for(;;){
-				matchRange = [this rangeOfCharacterFromSet:set options:2 range:searchRange];
-				if((matchRange.length == 0) || (matchRange.location != searchRange.location))
-					break;
-				replaceRange.length += matchRange.length;
-				searchRange.length -= matchRange.length;
-				searchRange.location += matchRange.length;
+	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingCharactersFromSet:)] ){
+			
+			
+			
+			
+			@implementation NSString (weakclassdump_compatibility)
+			- (void)removeCharactersInSet:(id)set{
+				
+		    length = [this length];
+			matchRange = [this rangeOfCharacterFromSet:set options:2 range:[0, length]];
+			while(matchRange.length > 0){
+				replaceRange = matchRange;
+				searchRange=[0,0];
+				searchRange.location = replaceRange.location + replaceRange.length;
+				searchRange.length = length - searchRange.location;
+				for(;;){
+					matchRange = [this rangeOfCharacterFromSet:set options:2 range:searchRange];
+					if((matchRange.length == 0) || (matchRange.location != searchRange.location))
+						break;
+					replaceRange.length += matchRange.length;
+					searchRange.length -= matchRange.length;
+					searchRange.location += matchRange.length;
+				}
+				[this deleteCharactersInRange:replaceRange];
+				matchRange.location -= replaceRange.length;
+				length -= replaceRange.length;
+				}
 			}
-			[this deleteCharactersInRange:replaceRange];
-			matchRange.location -= replaceRange.length;
-			length -= replaceRange.length;
+			
+
+			- (id)stringByRemovingCharactersFromSet:(id)set{
+				
+				if([this rangeOfCharacterFromSet:set options:2].length == 0)
+					return this;
+				temp = [[this mutableCopyWithZone:[this zone]] autorelease];
+				[temp removeCharactersInSet:set];
+				temp=[temp stringByReplacingOccurrencesOfString: @"\"" withString: @""];
+				return temp;
+			}
+			
+			@end
+
+	}
+	
+	if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingWhitespace)] ){
+	
+		@implementation NSString (weakclassdump_compatibility)
+		-(id)stringByRemovingWhitespace{
+			 return [this stringByRemovingCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]];
 		}
+		@end
 	}
-			
-	- (id)stringByRemovingCharactersFromSet:(id)set{
-
-		if([this rangeOfCharacterFromSet:set options:2].length == 0)
-			return this;
-		temp = [[this mutableCopyWithZone:[this zone]] autorelease];
-		[temp removeCharactersInSet:set];
-		temp=[temp stringByReplacingOccurrencesOfString: @"\"" withString: @""];
-		return temp;
-	}
-			
-	@end
-
-}
 	
-if ( ! [NSString instancesRespondToSelector:@selector(stringByRemovingWhitespace)] ){
-	
-	@implementation NSString (weakclassdump_compatibility)
-	-(id)stringByRemovingWhitespace{
-		 return [this stringByRemovingCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]];
-	}
-	@end
-}
-	
-NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
-NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
+	NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
+	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
  
+
+	
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";
 

@@ -595,7 +595,7 @@ function weak_classdump_bundle(bundle, outputdir) {
 // example 3: weak_classdump_bundle([NSBundle bundleWithPath:"/System/Library/Frameworks/iAd.framework"]);
 // will dump all classes in the defined bundle to default dir "/tmp" 
 // example 4: weak_classdump_bundle([NSBundle bundleWithPath:"/System/Library/Frameworks/iAd.framework"],"/tmp/iAD.framework/Headers/");
-// will dump all classes in the defined bundle to "/tmp/iAD.framework/"
+// will create target dir and dump all classes in the defined bundle to "/tmp/iAD.framework/Headers/"
 
 	
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";

@@ -480,7 +480,8 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 // will write to "/var/mobile/UIApplication.h"
 
 function weak_classdump_bundle(bundle, outputdir) {
-	var permittedNames = [ObjectiveC.classes allKeys].filter(function(name) { return [[NSBundle bundleForClass:objc_getClass(name)] isEqual:bundle] });
+	//var permittedNames = [ObjectiveC.classes allKeys].filter(function(name) { return [[NSBundle bundleForClass:objc_getClass(name)] isEqual:bundle] });
+	var permittedNames = [ObjectiveC.classes allKeys].filter( function (name) {  if ([name rangeOfString:"LA"].location!=0){ return [[NSBundle bundleForClass:objc_getClass(name.toString())] isEqual:bundle]; } else{ return NO; } } );
 	var results = [];
 	for (var i = 0; i < permittedNames.length; i++) {
 		try {

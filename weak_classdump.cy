@@ -43,42 +43,9 @@ function commonTypes(type){
 
 
 
-function structParser(aStruct){
-	
-	hasMoreStructs=0;
-	structString="";
-	someType="";
-		//hasMoreStructs=1;
-		aStruct=[NSString stringWithString:aStruct];
-		aStruct=[aStruct stringByReplacingOccurrencesOfString:@"^{?=" withString:""];
-		aStruct=[aStruct stringByReplacingOccurrencesOfString:@"}" withString:""];
-		
-		for (var f=0; f<[aStruct length]; f++){
-			currentLetter=[aStruct substringWithRange:[f,1]];
-			someType=constructTypeAndName(currentLetter,"",0);
-			someType=[someType stringByRemovingWhitespace];
-			structString=structString.toString()+"\t"+someType.toString()+" value"+(f+1).toString()+";\n";
-		}
-		structName="WCStruct_"+aStruct.toString();
-		if (![structsString containsSubstring:structName]){
-			structString="typedef struct{\n"+structString.toString();
-			structString=structString.toString()+"} "+structName.toString()+";\n\n";
-			structsString=structsString.toString()+structString.toString();
-		}
-		
-		structName=structName.toString()+"*";
-		return structName;
-	
-	return aStruct;
-	
-
-}
-
 function constructTypeAndName(aType,IvarName,isIvar){
 	
 	NSNotFound=2147483647;
-	
-
 	
 	compareString1=[NSString stringWithString:aType];
 	compareString2=[[[NSString stringWithString:aType] stringByReplacingOccurrencesOfString:"^" withString:""] stringByAppendingString:@"*"];
@@ -132,10 +99,37 @@ function constructTypeAndName(aType,IvarName,isIvar){
 	}
 	
 	if ([aType rangeOfString:"{"].length>0){
-			returnValue="struct ";
+	
+		returnValue="struct ";
 		range=[aType rangeOfString:@"="];
+	
 		if ([aType containsSubstring:@"^{?="]){
-			return structParser(aType).toString()+" "+IvarName.toString();
+	
+			aStruct=aType;
+			structString="";
+			someType="";
+			aStruct=[NSString stringWithString:aStruct];
+			aStruct=[aStruct stringByReplacingOccurrencesOfString:@"^{?=" withString:""];
+			aStruct=[aStruct stringByReplacingOccurrencesOfString:@"}" withString:""];
+		
+			for (var f=0; f<[aStruct length]; f++){
+				currentLetter=[aStruct substringWithRange:[f,1]];
+				someType=constructTypeAndName(currentLetter,"",0);
+				someType=[someType stringByRemovingWhitespace];
+				structString=structString.toString()+"\t"+someType.toString()+" value"+(f+1).toString()+";\n";
+			}
+	
+			structName="WCStruct_"+aStruct.toString();
+	
+			if (![structsString containsSubstring:structName]){
+				structString="typedef struct{\n"+structString.toString();
+				structString=structString.toString()+"} "+structName.toString()+";\n\n";
+				structsString=structsString.toString()+structString.toString();
+			}
+		
+			structName=structName.toString()+"*";
+			
+			return structName+" "+IvarName.toString();
 		}
 		aType=[aType stringByReplacingCharactersInRange:[range.location,aType.length-range.location] withString:"" ];
 		returnValue=returnValue.toString()+[aType stringByRemovingCharactersFromSet:structCharSet].toString();
@@ -191,21 +185,7 @@ function constructTypeAndName(aType,IvarName,isIvar){
  
 }
 
-function propertyTranslator(attrib){
-	
-	switch (attrib.toString()){
-		case "R" : p = "readonly"; 
-		case "C" : p = "copy"; break;
-		case "&" : p = "retain"; break;
-		case "N" : p = "nonatomic"; break;
-		case "D" : p = "@dynamic"; break;
-		case "W" : p = "__weak"; break;
-		case "P" : p = "t<encoding>"; break;
-		default: p = attrib;
-	}
 
-	return p;
-}
 
 function propertyLineGenerator(attributes,name){
 	
@@ -235,7 +215,19 @@ function propertyLineGenerator(attributes,name){
 			}
 			
 			if ([attr length]==1){
-				[newPropsArray addObject:propertyTranslator(attr)];
+				
+				switch (attr.toString()){
+					case "R" : translatedProperty = "readonly"; 
+					case "C" : translatedProperty = "copy"; break;
+					case "&" : translatedProperty = "retain"; break;
+					case "N" : translatedProperty = "nonatomic"; break;
+					case "D" : translatedProperty = "@dynamic"; break;
+					case "W" : translatedProperty = "__weak"; break;
+					case "P" : translatedProperty = "t<encoding>"; break;
+					default: translatedProperty = attr;
+				}
+				
+				[newPropsArray addObject:translatedProperty];
 			}
 			
 			if ([attr rangeOfString:@"G"].location==0){
@@ -461,7 +453,11 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 	
 	outputdir=outputdir.toString()+"/";
 	
-	
+	if (![NSFileManager.defaultManager fileExistsAtPath:outputdir]){
+		try{
+			[NSFileManager.defaultManager createDirectoryAtPath:outputdir withIntermediateDirectories:YES attributes:nil error:nil];
+		}catch(e){}
+	}
 	
 	classString = [NSString stringWithString:classString ]; 
 	if ([classString writeToFile:outputdir.toString()+startingClassname.toString()+".h" atomically:YES]){
@@ -474,22 +470,64 @@ function weak_classdump(classname,alsoDumpSuperclasses,outputdir){
 		return "Failed to write to "+outputdir.toString()+startingClassname.toString()+".h - Check file path and permissions? Suggested writeable directory: "+writeableDir.toString();
 	}
 }
-// Usage example : weak_classdump(SBAwayController);
-// (will write to default path "/tmp/SBAwayController.h"
-// example 2: weak_classdump(UIApplication,"/var/mobile/");
-// will write to "/var/mobile/UIApplication.h"
 
-function weak_classdump_bundle(bundle, outputdir) {
-	//var permittedNames = [ObjectiveC.classes allKeys].filter(function(name) { return [[NSBundle bundleForClass:objc_getClass(name)] isEqual:bundle] });
+
+function writeToSylogFromBgThread(string){
+	NSLog(string);
+}
+
+function weak_loadwdc_class(){
+
+	@implementation WCDBundleDumper : NSObject {}
+	+(id)dumpBundle:(id)infoDictionary{
+	var bundle=[infoDictionary objectForKey:@"bundle"];
+	var outputdir=[infoDictionary objectForKey:@"outputdir"];
+	writeToSylogFromBgThread(@"weak_classdump: Gathering all classes...please wait...");
 	var permittedNames = [ObjectiveC.classes allKeys].filter( function (name) {  if ([name rangeOfString:"LA"].location!=0){ return [[NSBundle bundleForClass:objc_getClass(name.toString())] isEqual:bundle]; } else{ return NO; } } );
+	writeToSylogFromBgThread(@"weak_classdump: Found " + [permittedNames count].toString() +" classes matching your bundle. Starting dump...");
 	var results = [];
 	for (var i = 0; i < permittedNames.length; i++) {
 		try {
-			results.push(weak_classdump(objc_getClass(permittedNames[i]), false, outputdir));
+			results.push(weak_classdump(objc_getClass(objc_getClass([[permittedNames[i] description] UTF8String])), false, outputdir));
 		} catch (e) {
 		}
 	}
-	return results.join("\n");
+	
+	[UIDevice.currentDevice _playSystemSound:1100]; // comment out to not produce any sound on finish
+	writeToSylogFromBgThread([NSString stringWithFormat:@"weak_classdump: Finished dumping bundle %@. Check output dir %@",bundle,outputdir]);
+	
+	}                                                    
+	@end
+
+}
+
+function weak_classdump_bundle(bundle, outputdir) {
+
+	if (typeof(bundle)=="undefined"){
+		bundle=[NSBundle mainBundle];
+	}
+	if (![bundle isLoaded]){
+		NSLog(@"weak_classdump: Bundle %@ is not loaded,attempting to load it",bundle);
+		[bundle load];
+	}
+	if (typeof(outputdir)=="undefined"){
+		outputdir="/tmp/";
+	}
+	
+
+	var infoDict=[NSMutableDictionary dictionary];
+	[ infoDict setObject:bundle forKey:@"bundle"];
+	[ infoDict setObject:outputdir forKey:@"outputdir"];
+	
+	try {	
+		[WCDBundleDumper class];
+	} catch (e){
+		weak_loadwdc_class();
+	}  
+	
+	[objc_getClass("WCDBundleDumper") performSelectorInBackground:@selector(dumpBundle:) withObject:infoDict ];
+	return "Dumping bundle... Check syslog. Will play lock sound when done."
+
 }
 
 	
@@ -549,6 +587,15 @@ function weak_classdump_bundle(bundle, outputdir) {
 	NSLog_ = dlsym(RTLD_DEFAULT, "NSLog")
 	NSLog = function() { var types = 'v', args = [], count = arguments.length; for (var i = 0; i != count; ++i) { types += '@'; args.push(arguments[i]); } new Functor(NSLog_, types).apply(null, args); }
  
+
+// Usage example : weak_classdump(SBAwayController);
+// (will write to default path "/tmp/SBAwayController.h"
+// example 2: weak_classdump(UIApplication,"/var/mobile/");
+// will write to "/var/mobile/UIApplication.h"
+// example 3: weak_classdump_bundle([NSBundle bundleWithPath:"/System/Library/Frameworks/iAd.framework"]);
+// will dump all classes in the defined bundle to default dir "/tmp" 
+// example 4: weak_classdump_bundle([NSBundle bundleWithPath:"/System/Library/Frameworks/iAd.framework"],"/tmp/iAD.framework/Headers/");
+// will dump all classes in the defined bundle to "/tmp/iAD.framework/"
 
 	
 "Added weak_classdump to \""+NSProcessInfo.processInfo .processName.toString()+"\" ("+NSProcessInfo.processInfo .processIdentifier.toString()+")";

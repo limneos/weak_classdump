@@ -1,6 +1,3 @@
-#!/usr/bin/cycript 
-
-
 
 function commonTypes(type){
 	

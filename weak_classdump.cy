@@ -79,7 +79,7 @@ function getProtocolLines(protocol){
 					protSelector=protMeths[gg][0].toString();
 					protTypes=protMeths[gg][1];
 					protTypes=[protTypes stringByRemovingCharactersFromSet: [NSCharacterSet decimalDigitCharacterSet ]];
-					protTypes=[[NSString stringWithString:protTypes] stringByReplacingOccurrencesOfString:@"@:" withString:""];
+					protTypes=[[NSString stringWithString:protTypes] stringByReplacingCharactersInRange:[1,2] withString:""];
 					returnType=[protTypes substringToIndex: 1]; 
 					returnType=commonTypes(returnType);
 					finString="";
